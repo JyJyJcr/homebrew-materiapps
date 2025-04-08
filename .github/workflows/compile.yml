@@ -22,18 +22,10 @@ jobs:
         #   - name: osx_amd64
         #     host: macos-13
     steps:
-      - name: install deps
+      - name: install dependencies
         run: |
           brew upgrade
-          brew reinstall gcc
-          brew install cmake ninja open-mpi fftw scalapack
-      - name: check state
-        run: |
-          echo $PATH
-          which mpif90
-          which mpicc
-          ls $(brew --prefix)/Cellar/gcc/14.2.0_1/bin/
-          which gfortran
+          brew reinstall gcc cmake ninja open-mpi fftw scalapack
       - name: checkout quantum espresso
         uses: actions/checkout@v4
         with:
@@ -51,23 +43,22 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
-          cd q-e
-          cmake -S . -B build --install-prefix "${{ github.workspace }}/package" \
-          -DCMAKE_Fortran_COMPILER="$(brew --prefix)/bin/mpif90" \
-          -DCMAKE_C_COMPILER="$(brew --prefix)/bin/mpicc" \
+          cmake -S q-e -B build -GNinja --install-prefix "${{ github.workspace }}/package" \
+          -DBLAS_LIBRARIES="$(brew --prefix openblas)"
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
-
+          -DSCALAPACK_LIBRARIES="$(brew --prefix scalapack)"
           cmake --build build
           cmake --install build
-    #   - name: upload raw
-    #     uses: actions/upload-artifact@v4
-    #     with:
-    #       name: raw+${{ matrix.target.name }}
-    #       path: |
-    #         q-e/install_dir/${{matrix.target.triple}}/release/*.so
-    #         target/${{matrix.target.triple}}/release/*.dylib
+          tar cvzf quantum-espresso-${{ matrix.target.name }}.tar.gz package
+
+      - name: upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw+${{ matrix.target.name }}
+          path: |
+            quantum-espresso-${{ matrix.target.name }}.tar.gz
 #   publish:
 #     name: publish github repository
 #     needs: build
