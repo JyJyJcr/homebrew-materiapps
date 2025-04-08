@@ -19,13 +19,18 @@ jobs:
         target:
           - name: osx_arm64
             host: macos-latest
-          - name: osx_amd64
-            host: macos-13
+        #   - name: osx_amd64
+        #     host: macos-13
     steps:
       - name: install deps
         run: |
           brew upgrade
-          brew install cmake ninja open-mpi fftw scalapack
+          brew install gcc cmake ninja open-mpi fftw scalapack
+      - name: check state
+        run: |
+          echo $path
+          which mpif90
+          which mpicc
       - name: checkout quantum espresso
         uses: actions/checkout@v4
         with:
@@ -43,11 +48,10 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
-          which mpif90
-          which mpicc
           cd q-e
           cmake -GNinja -S . -B build --install-prefix "${{ github.workspace }}/package" \
-          -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_C_COMPILER=mpicc \
+          -DCMAKE_Fortran_COMPILER=mpif90 \
+          -DCMAKE_C_COMPILER=mpicc \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
