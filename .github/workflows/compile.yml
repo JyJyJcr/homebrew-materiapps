@@ -41,6 +41,7 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
+          cd q-e
           cmake -GNinja -S . -B build --install-prefix "${{ github.workspace }}/install_dir" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
