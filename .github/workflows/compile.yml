@@ -19,8 +19,8 @@ jobs:
         target:
           - name: osx_arm64
             host: macos-latest
-        #   - name: osx_amd64
-        #     host: macos-13
+          - name: osx_amd64
+            host: macos-13
     steps:
       - name: install dependencies
         run: |
@@ -44,8 +44,6 @@ jobs:
       - name: build
         run: |
           cmake -S q-e -B build -GNinja --install-prefix "${{ github.workspace }}/package" \
-          -DBLAS_LIBRARIES="$(brew --prefix openblas)" \
-          -DLAPACK_LIBRARIES="$(brew --prefix lapack)" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
