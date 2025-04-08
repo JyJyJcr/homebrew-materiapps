@@ -43,11 +43,11 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
-          cmake -S q-e -B build --install-prefix "${{ github.workspace }}/package" \
+          cmake -S q-e -B build -GNinja --install-prefix "${{ github.workspace }}/package" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
-          -DSCALAPACK_LIBRARIES="$(brew --prefix scalapack)"
+
           cmake --build build
           cmake --install build
       - name: compress
