@@ -25,7 +25,7 @@ jobs:
       - name: install dependencies
         run: |
           brew upgrade
-          brew reinstall gcc cmake ninja open-mpi fftw scalapack
+          brew reinstall gcc cmake ninja openblas lapack open-mpi fftw scalapack
       - name: checkout quantum espresso
         uses: actions/checkout@v4
         with:
@@ -44,13 +44,16 @@ jobs:
       - name: build
         run: |
           cmake -S q-e -B build -GNinja --install-prefix "${{ github.workspace }}/package" \
-          -DBLAS_LIBRARIES="$(brew --prefix openblas)"
+          -DBLAS_LIBRARIES="$(brew --prefix openblas)" \
+          -DLAPACK_LIBRARIES="$(brew --prefix lapack)" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
           -DSCALAPACK_LIBRARIES="$(brew --prefix scalapack)"
           cmake --build build
           cmake --install build
+      - name: compress
+        run: |
           tar cvzf quantum-espresso-${{ matrix.target.name }}.tar.gz package
 
       - name: upload package
