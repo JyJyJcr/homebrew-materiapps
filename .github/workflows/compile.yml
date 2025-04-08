@@ -23,7 +23,9 @@ jobs:
             host: macos-13
     steps:
       - name: install deps
-        run: brew install fftw scalapack
+        run: |
+          brew upgrade
+          brew install gcc open-mpi fftw scalapack
       - name: checkout quantum espresso
         uses: actions/checkout@v4
         with:
@@ -42,7 +44,7 @@ jobs:
       - name: build
         run: |
           cd q-e
-          cmake -GNinja -S . -B build --install-prefix "${{ github.workspace }}/install_dir" \
+          cmake -GNinja -S . -B build --install-prefix "${{ github.workspace }}/package" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
