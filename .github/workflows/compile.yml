@@ -25,7 +25,7 @@ jobs:
       - name: install deps
         run: |
           brew upgrade
-          brew install gcc open-mpi fftw scalapack
+          brew install cmake ninja open-mpi fftw scalapack
       - name: checkout quantum espresso
         uses: actions/checkout@v4
         with:
@@ -43,6 +43,8 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
+          which mpif90
+          which mpicc
           cd q-e
           cmake -GNinja -S . -B build --install-prefix "${{ github.workspace }}/package" \
           -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_C_COMPILER=mpicc \
