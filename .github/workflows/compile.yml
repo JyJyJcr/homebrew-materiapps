@@ -31,6 +31,7 @@ jobs:
           echo $PATH
           which mpif90
           which mpicc
+          which gfortran
       - name: checkout quantum espresso
         uses: actions/checkout@v4
         with:
