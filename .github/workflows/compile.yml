@@ -43,14 +43,14 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
-          cmake -S q-e -B build -GNinja --install-prefix "${{ github.workspace }}/package" \
+          cmake -S q-e -B build --install-prefix "${{ github.workspace }}/package" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
 
           cmake --build build
           cmake --install build
-      - name: compress
+      - name: compress package
         run: |
           tar cvzf quantum-espresso-${{ matrix.target.name }}.tar.gz package
 
