@@ -6,8 +6,8 @@ class QuantumEspresso < Formula
     homepage "https://www.quantum-espresso.org"
     license "GPL-2.0"
     url "https://github.com/JyJyJcr/q-e.git",
-        tag: 7.4.1-brew
-        revision: 7fe8102023e5ba60f0d3378dc2e72ad12343ae4c
+        tag: "7.4.1-brew"
+        revision: "7fe8102023e5ba60f0d3378dc2e72ad12343ae4c"
   
     depends_on "cmake" => :build
     depends_on "ninja" => :build
