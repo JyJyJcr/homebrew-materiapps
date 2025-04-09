@@ -17,21 +17,21 @@ jobs:
             as_release: ${{ startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p') }}
             is_release: ${{ startsWith(github.ref,'refs/tags/v') }}
         target:
-          - name: osx_arm64
+          - name: arm64
             host: macos-latest
-          - name: osx_amd64
+          - name: amd64
             host: macos-13
     steps:
       - name: install dependencies
         run: |
           brew upgrade
           brew reinstall gcc cmake ninja openblas lapack open-mpi fftw scalapack
-      - name: checkout quantum espresso
-        uses: actions/checkout@v4
-        with:
-          repository: QEF/q-e
-          ref: develop
-          path: q-e
+    #   - name: checkout quantum espresso
+    #     uses: actions/checkout@v4
+    #     with:
+    #       repository: QEF/q-e
+    #       ref: develop
+    #       path: q-e
     #   - name: set build cache
     #     uses: actions/cache@v4
     #     with:
@@ -43,22 +43,8 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
-          GCC_GFORTRAN="$(find "$(brew --prefix gcc)/bin" -regex '.*/gfortran-[0-9]*')"
-          GCC_GCC="$(find "$(brew --prefix gcc)/bin" -regex '.*/gcc-[0-9]*')"
-          GCC_GXX="$(find "$(brew --prefix gcc)/bin" -regex '.*/g++-[0-9]*')"
-
-          cmake -GNinja -S q-e -B build --install-prefix "${{ github.workspace }}/package" \
-          -DQE_ENABLE_OPENMP=ON \
-          -DQE_ENABLE_MPI=ON \
-          -DQE_ENABLE_SCALAPACK=ON \
-          \
-          "-DCMAKE_Fortran_COMPILER=$GCC_GFORTRAN" \
-          "-DCMAKE_C_COMPILER=$GCC_GCC" \
-          "-DQE_CPP=$GCC_GXX" \
-          -DCMAKE_PREFIX_PATH="$(brew --prefix openblas);$(brew --prefix lapack)"
-
-          cmake --build build
-          cmake --install build
+          brew install --build-bottle JyJyJcr/materiapps/quantum-espresso
+          brew bottle JyJyJcr/materiapps/quantum-espresso
       - name: compress package
         run: |
           tar cvzf quantum-espresso-${{ matrix.target.name }}.tar.gz package
