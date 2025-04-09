@@ -43,10 +43,19 @@ jobs:
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
       - name: build
         run: |
-          cmake -S q-e -B build --install-prefix "${{ github.workspace }}/package" \
+          GCC_GFORTRAN="$(find "$(brew --prefix gcc)/bin" -regex '.*/gfortran-[0-9]*')"
+          GCC_GCC="$(find "$(brew --prefix gcc)/bin" -regex '.*/gcc-[0-9]*')"
+          GCC_GXX="$(find "$(brew --prefix gcc)/bin" -regex '.*/g++-[0-9]*')"
+
+          cmake -GNinja -S q-e -B build --install-prefix "${{ github.workspace }}/package" \
           -DQE_ENABLE_OPENMP=ON \
           -DQE_ENABLE_MPI=ON \
           -DQE_ENABLE_SCALAPACK=ON \
+          \
+          "-DCMAKE_Fortran_COMPILER=$GCC_GFORTRAN" \
+          "-DCMAKE_C_COMPILER=$GCC_GCC" \
+          "-DQE_CPP=$GCC_GXX" \
+          -DCMAKE_PREFIX_PATH="$(brew --prefix openblas);$(brew --prefix lapack)"
 
           cmake --build build
           cmake --install build
