@@ -50,7 +50,7 @@ jobs:
           cd -
       - name: build bottle
         run: |
-          brew install --build-from-source --build-bottle JyJyJcr/materiapps/quantum-espresso
+          brew install --build-bottle JyJyJcr/materiapps/quantum-espresso
           brew bottle --json JyJyJcr/materiapps/quantum-espresso
       - name: upload bottle
         uses: actions/upload-artifact@v4
