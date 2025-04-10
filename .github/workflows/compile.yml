@@ -1,10 +1,12 @@
 name: test & release
 on:
   push:
-    # branches: main
-    # tags:
-    #   - v*
-    #   - p*
+    branches-ignore:
+      - main
+      - dummy_main
+    tags:
+      - release-*
+      - prerelease-*
 
 jobs:
   build:
@@ -12,10 +14,9 @@ jobs:
     runs-on: ${{ matrix.target.host }}
     strategy:
       matrix:
-        # const:
-        #   - mode: ${{ (startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p')) && 'release' || 'test' }}
-        #     as_release: ${{ startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p') }}
-        #     is_release: ${{ startsWith(github.ref,'refs/tags/v') }}
+        const:
+          - as_release: ${{ startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-') }}
+            is_release: ${{ startsWith(github.ref,'refs/tags/release-') }}
         target:
           - name: osx_arm64
             host: macos-14
@@ -64,59 +65,48 @@ jobs:
           name: json+${{ matrix.target.name }}
           path: |
             quantum-espresso-*.json
-#   publish:
-#     name: publish github repository
-#     needs: build
-#     runs-on: ubuntu-latest
-#     environment:
-#       name: publish
-#     permissions:
-#       contents: write
-#       actions: write
-#     if: startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p')
-#     steps:
-#       - name: checkout
-#         uses: actions/checkout@v4
-#         with:
-#           ref: publish
-#           fetch-depth: 0
-#       - name: set gitconfig
-#         run: |
-#           git config user.name github-actions[bot]
-#           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-#       - name: merge the commit to `publish`
-#         run: |
-#           # git branch main ${{github.ref_name}}
-#           git merge ${{github.ref_name}} -m "ci: catch up to ${{github.ref_name}}"
-#           # git reset --hard ${{github.ref_name}}
-#       - name: (deb) install reprepro and dpkg-sig
-#         run: |
-#           sudo apt-get -y install reprepro dpkg-sig
-#       - name: (deb) import gpg key
-#         uses: crazy-max/ghaction-import-gpg@v6
-#         with:
-#           gpg_private_key: ${{ secrets.DEB_GPG_SECRET_KEY }}
-#       - name: (deb) download deb
-#         uses: actions/download-artifact@v4
-#         with:
-#           pattern: deb+*
-#           merge-multiple: true
-#           path: ./
-#       - name: (deb) build repository
-#         run: |
-#           cd publish/${{ startsWith(github.ref,'refs/tags/v') && 'deb' || 'deb-unstable' }}
-#           rm -rf pool
-#           rm -rf dists
-#           for deb in $(ls ../../ |grep -E '\.deb$');do
-#             dpkg-sig -k 3C288CF6F3917DC32ED8605655C5F6BAACEEA951 --sign builder "../../$deb"
-#             reprepro includedeb "$(cat ../../$deb.codename)" "../../$deb"
-#           done
-#           reprepro export
-#           rm -rf db
-#           cd -
-#       - name: (deb) commit
-#         run: |
-#           git add ./publish/${{ startsWith(github.ref,'refs/tags/v') && 'deb' || 'deb-unstable' }}/
-#           git commit -m "ci: generate debian ${{ startsWith(github.ref,'refs/tags/v') && 'stable' || 'unstable' }} repository"
-#       - name: push
-#         run: git push
+  publish:
+    name: publish bottle
+    needs: build
+    runs-on: ubuntu-latest
+    # environment:
+    #   name: publish
+    permissions:
+      contents: write
+      actions: write
+    if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
+    steps:
+      - name: set gitconfig
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: checkout and merge
+        run: |
+          brew tap JyJyJcr/materiapps
+          cd "$(brew --repo JyJyJcr/materiapps)"
+          git fetch
+          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
+          cd -
+      - name: download bottle
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bottle+*
+          merge-multiple: true
+          path: ./
+      - name: download json
+        uses: actions/download-artifact@v4
+        with:
+          pattern: json+*
+          merge-multiple: true
+          path: ./
+      - name: commit
+        run: |
+          for json in quantum-espresso-*.json;do
+            brew bottle --merge --write $json
+          done
+      # - name: push
+      #   run: |
+      #     cd "$(brew --repo JyJyJcr/materiapps)"
+      #     git push
+      #     cd -
