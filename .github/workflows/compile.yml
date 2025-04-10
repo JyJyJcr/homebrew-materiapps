@@ -1,31 +1,31 @@
 name: test & release
 on:
   push:
-    branches: main
-    tags:
-      - v*
-      - p*
+    # branches: main
+    # tags:
+    #   - v*
+    #   - p*
 
 jobs:
   build:
-    name: ${{ matrix.const.as_release && ( matrix.const.is_release && 'release' || 'prerelease') || 'test' }} build on ${{matrix.target.name}}
+    name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
     strategy:
       matrix:
-        const:
-          - mode: ${{ (startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p')) && 'release' || 'test' }}
-            as_release: ${{ startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p') }}
-            is_release: ${{ startsWith(github.ref,'refs/tags/v') }}
+        # const:
+        #   - mode: ${{ (startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p')) && 'release' || 'test' }}
+        #     as_release: ${{ startsWith(github.ref,'refs/tags/v')||startsWith(github.ref,'refs/tags/p') }}
+        #     is_release: ${{ startsWith(github.ref,'refs/tags/v') }}
         target:
-          - name: arm64
-            host: macos-latest
-          - name: amd64
+          - name: osx_arm64
+            host: macos-14
+          - name: osx_amd64
             host: macos-13
     steps:
-      - name: install dependencies
-        run: |
-          brew upgrade
-          brew reinstall gcc cmake ninja openblas lapack open-mpi fftw scalapack
+    #   - name: install dependencies
+    #     run: |
+    #       brew upgrade
+    #       brew 
     #   - name: checkout quantum espresso
     #     uses: actions/checkout@v4
     #     with:
@@ -41,20 +41,29 @@ jobs:
     #         ${{ github.workspace }}/target
     #       key: src+${{matrix.target.name}}+${{matrix.target.ngx}}+${{github.run_id}}
     #       restore-keys: src+${{matrix.target.name}}+${{matrix.target.ngx}}+
-      - name: build
+      - name: checkout
         run: |
-          brew install --build-bottle JyJyJcr/materiapps/quantum-espresso
-          brew bottle JyJyJcr/materiapps/quantum-espresso
-      - name: compress package
+          brew tap JyJyJcr/materiapps
+          cd
+          git fetch
+          git checkout ${{github.sha}}
+          cd -
+      - name: build bottle
         run: |
-          tar cvzf quantum-espresso-${{ matrix.target.name }}.tar.gz package
-
-      - name: upload package
+          brew install --build-from-source --build-bottle JyJyJcr/materiapps/quantum-espresso
+          brew bottle --json JyJyJcr/materiapps/quantum-espresso
+      - name: upload bottle
         uses: actions/upload-artifact@v4
         with:
-          name: raw+${{ matrix.target.name }}
+          name: bottle+${{ matrix.target.name }}
           path: |
-            quantum-espresso-${{ matrix.target.name }}.tar.gz
+            quantum-espresso-*.tar.gz
+      - name: upload json
+        uses: actions/upload-artifact@v4
+        with:
+          name: json+${{ matrix.target.name }}
+          path: |
+            quantum-espresso-*.json
 #   publish:
 #     name: publish github repository
 #     needs: build
