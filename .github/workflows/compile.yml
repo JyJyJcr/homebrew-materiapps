@@ -52,7 +52,7 @@ jobs:
       - name: build bottle
         run: |
           brew install --build-bottle JyJyJcr/materiapps/quantum-espresso
-          brew bottle --json JyJyJcr/materiapps/quantum-espresso
+          brew bottle --json --root-url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/${{ github.ref_name }}" JyJyJcr/materiapps/quantum-espresso
       - name: upload bottle
         uses: actions/upload-artifact@v4
         with:
@@ -65,8 +65,8 @@ jobs:
           name: json+${{ matrix.target.name }}
           path: |
             quantum-espresso-*.json
-  publish:
-    name: publish bottle
+  publish_formula:
+    name: publish formula
     needs: build
     runs-on: macos-latest
     # environment:
@@ -94,12 +94,6 @@ jobs:
           cd "$(brew --repo JyJyJcr/materiapps)"
           git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
           cd -
-      - name: download bottle
-        uses: actions/download-artifact@v4
-        with:
-          pattern: bottle+*
-          merge-multiple: true
-          path: ./
       - name: download json
         uses: actions/download-artifact@v4
         with:
@@ -111,8 +105,30 @@ jobs:
           for json in quantum-espresso-*.json;do
             brew bottle --merge --write $json
           done
-      # - name: push
-      #   run: |
-      #     cd "$(brew --repo JyJyJcr/materiapps)"
-      #     git push
-      #     cd -
+      - name: push
+        run: |
+          cd "$(brew --repo JyJyJcr/materiapps)"
+          git push
+          cd -
+  publish_bottle:
+    name: publish bottle
+    needs: build
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: download bottle
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bottle+*
+          merge-multiple: true
+          path: ./
+      - name: release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: ${{ startsWith(github.ref,'refs/tags/prerelease-') }}
+          files: |
+            quantum-espresso-*.tar.gz
