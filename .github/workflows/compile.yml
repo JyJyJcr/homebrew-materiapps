@@ -44,7 +44,7 @@ jobs:
       - name: checkout
         run: |
           brew tap JyJyJcr/materiapps
-          cd
+          cd "$(brew --repo JyJyJcr/materiapps)"
           git fetch
           git checkout ${{github.sha}}
           cd -
