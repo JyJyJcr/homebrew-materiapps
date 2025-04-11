@@ -26,7 +26,8 @@ jobs:
           cd homebrew-materiapps
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git config set "http.https://github.com/.extraheader" "AUTHORIZATION: Bearer ${{ github.token }}"
+          git config set http.https://github.com/.extraheader "AUTHORIZATION: Bearer ${{ secrets.GITHUB_TOKEN }}"
+          git config list --local
           date > date.txt
           git add date.txt
           git commit -m "test: auto push"
