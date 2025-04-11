@@ -1,22 +1,38 @@
-name: test & release
+name: release
 on:
   push:
-    branches-ignore:
-      - main
-      - dummy_main
     tags:
       - release-*
       - prerelease-*
 
 jobs:
+  merge:
+    name: merge ${{ github.ref_name }} to ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: set gitconfig
+        run: |
+          git config --global user.name github-actions[bot]
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          fetch-depth: 0
+      - name: reset & merge & push
+        run: |
+          git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
+          git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
+
   build:
     name: build bottle on ${{ matrix.target.name }}
+    needs: merge
     runs-on: ${{ matrix.target.host }}
     strategy:
       matrix:
-        const:
-          - as_release: ${{ startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-') }}
-            is_release: ${{ startsWith(github.ref,'refs/tags/release-') }}
         target:
           - name: osx_arm64
             host: macos-14
@@ -26,55 +42,37 @@ jobs:
       - name: brew upgrade
         run: |
           brew upgrade
-      - name: brew tap from this commit
+      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
         run: |
           brew tap ${{ github.repository }}
           cd "$(brew --repo ${{ github.repository }})"
           git fetch
-          git checkout ${{github.sha}}
+          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
           cd -
-        if: ${{ ! (startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')) }}
-      - name: brew tap from merged ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
-        run: |
-          brew tap ${{ github.repository }}
-          cd "$(brew --repo ${{ github.repository }})"
-          git fetch
-          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
-          git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
-          cd -
-        if: ${{ startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-') }}
-      - name: brew install from source
-        run: |
-          brew install ${{ github.repository }}/quantum-espresso
-        if: ${{ ! (startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')) }}
       - name: build bottle
         run: |
           brew install --build-bottle ${{ github.repository }}/quantum-espresso
           brew bottle --json --root-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}" ${{ github.repository }}/quantum-espresso
-        if: ${{ startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-') }}
       - name: upload bottle
         uses: actions/upload-artifact@v4
         with:
           name: bottle+${{ matrix.target.name }}
           path: |
             quantum-espresso-*.tar.gz
-        if: ${{ startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-') }}
       - name: upload bottle info json
         uses: actions/upload-artifact@v4
         with:
           name: json+${{ matrix.target.name }}
           path: |
             quantum-espresso-*.json
-        if: ${{ startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-') }}
   publish_formula:
     name: publish formula
-    needs: build
+    needs:
+      - merge
+      - build
     runs-on: macos-latest
-    # environment:
-    #   name: publish
     permissions:
       contents: write
-    if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
     steps:
       - name: brew upgrade
         run: |
@@ -83,13 +81,12 @@ jobs:
         run: |
           git config --global user.name github-actions[bot]
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
-      - name: brew tap from merged ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
         run: |
           brew tap ${{ github.repository }}
           cd "$(brew --repo ${{ github.repository }})"
           git fetch
-          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
-          git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
+          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
           cd -
       - name: download bottle info json
         uses: actions/download-artifact@v4
@@ -111,7 +108,6 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: write
-    if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
     steps:
       - name: download bottle
         uses: actions/download-artifact@v4
@@ -119,11 +115,14 @@ jobs:
           pattern: bottle+*
           merge-multiple: true
           path: ./
+      - name: brew upgrade
+        run: |
+          brew upgrade
       - name: replace bottle name
         run: |
           brew install rename
           rename -s -- - quantum-espresso-*.tar.gz
-      - name: release
+      - name: create release
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ startsWith(github.ref,'refs/tags/prerelease-') }}
@@ -132,7 +131,6 @@ jobs:
   test:
     name: test bottle on ${{ matrix.target.name }}
     runs-on: ${{ matrix.target.host }}
-    if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
     needs:
       - publish_bottle
       - publish_formula
@@ -147,13 +145,34 @@ jobs:
       - name: brew upgrade
         run: |
           brew upgrade
-      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
         run: |
           brew tap ${{ github.repository }}
           cd "$(brew --repo ${{ github.repository }})"
           git fetch
-          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
           cd -
       - name: brew install from bottle
         run: |
           brew install quantum-espresso
+  commit:
+    name: commit ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }} to ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+    needs: test
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: set gitconfig
+        run: |
+          git config --global user.name github-actions[bot]
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          fetch-depth: 0
+      - name: reset & push
+        run: |
+          git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
+
