@@ -9,6 +9,24 @@ on:
       - prerelease-*
 
 jobs:
+  push_test:
+    name: test push
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: dummy_main
+          fetch-depth: 0
+      - name: push
+        run: |
+          git config list
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          date > date.txt
+          git add date.txt
+          git commit -m "test: auto push"
+          git push
   build:
     name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
@@ -88,6 +106,7 @@ jobs:
           git config list
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git log
           git push
           cd -
   publish_bottle:
