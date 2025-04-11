@@ -32,12 +32,10 @@ jobs:
           git add date.txt
           git commit -m "test: auto push"
           echo commit succ
-          cd -
       - name: push changes
         uses: ad-m/github-push-action@v0.8.0
         with:
           branch: dummy_main
-          directory: homebrew-materiapps
   build:
     name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
