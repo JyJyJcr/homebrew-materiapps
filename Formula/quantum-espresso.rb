@@ -34,6 +34,8 @@ class QuantumEspresso < Formula
     end
   
     test do
+      # here we add change for testing merge!
+
       # `test do` will create, run in and delete a temporary directory.
       #
       # This test will fail and we won't accept that! For Homebrew/homebrew-core
