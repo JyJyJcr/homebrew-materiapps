@@ -9,39 +9,8 @@ on:
       - prerelease-*
 
 jobs:
-  # push_test:
-  #   name: test push
-  #   runs-on: macos-latest
-  #   permissions:
-  #     contents: write
-  #   steps:
-  #     # - name: checkout
-  #     #   uses: actions/checkout@v4
-  #     #   with:
-  #     #     ref: dummy_main
-  #     #     fetch-depth: 0
-  #     #     path:
-  #     - name: set
-  #       run: |
-  #         git config --global user.name github-actions[bot]
-  #         git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
-  #     - name: push
-  #       run: |
-  #         git clone -b dummy_main
-  #         cd homebrew-materiapps
-          
-  #         git config list --local
-  #         date > date.txt
-  #         git add date.txt
-  #         git commit -m "test: auto push"
-  #         git push
-  #         cd -
-  #     # - name: push changes
-  #     #   uses: ad-m/github-push-action@v0.8.0
-  #     #   with:
-  #     #     branch: dummy_main
   build:
-    name: build bottle on ${{matrix.target.name}}
+    name: build bottle on ${{ matrix.target.name }}
     runs-on: ${{ matrix.target.host }}
     strategy:
       matrix:
@@ -56,15 +25,15 @@ jobs:
     steps:
       - name: checkout
         run: |
-          brew tap JyJyJcr/materiapps
-          cd "$(brew --repo JyJyJcr/materiapps)"
+          brew tap ${{ github.repository }}
+          cd "$(brew --repo ${{ github.repository }})"
           git fetch
           git checkout ${{github.sha}}
           cd -
       - name: build bottle
         run: |
-          brew install --build-bottle JyJyJcr/materiapps/quantum-espresso
-          brew bottle --json --root-url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/${{ github.ref_name }}" JyJyJcr/materiapps/quantum-espresso
+          brew install --build-bottle ${{ github.repository }}/quantum-espresso
+          brew bottle --json --root-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}" ${{ github.repository }}/quantum-espresso
       - name: upload bottle
         uses: actions/upload-artifact@v4
         with:
@@ -94,14 +63,14 @@ jobs:
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
       - name: checkout
         run: |
-          brew tap JyJyJcr/materiapps
-          cd "$(brew --repo JyJyJcr/materiapps)"
+          brew tap ${{ github.repository }}
+          cd "$(brew --repo ${{ github.repository }})"
           git fetch
           git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
           cd -
       - name: merge
         run: |
-          cd "$(brew --repo JyJyJcr/materiapps)"
+          cd "$(brew --repo ${{ github.repository }})"
           git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
           cd -
       - name: download json
@@ -112,12 +81,10 @@ jobs:
           path: ./
       - name: commit
         run: |
-          for json in quantum-espresso-*.json;do
-            brew bottle --merge --write $json
-          done
+          brew bottle --merge --write quantum-espresso-*.json
       - name: push
         run: |
-          cd "$(brew --repo JyJyJcr/materiapps)"
+          cd "$(brew --repo ${{ github.repository }})"
           git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
           cd -
   publish_bottle:
@@ -142,3 +109,28 @@ jobs:
           prerelease: ${{ startsWith(github.ref,'refs/tags/prerelease-') }}
           files: |
             quantum-espresso-*.tar.gz
+  test:
+    name: test bottle on ${{ matrix.target.name }}
+    runs-on: ${{ matrix.target.host }}
+    if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
+    needs:
+      - publish_bottle
+      - publish_formula
+    strategy:
+      matrix:
+        target:
+          - name: osx_arm64
+            host: macos-14
+          - name: osx_amd64
+            host: macos-13
+    steps:
+      - name: checkout
+        run: |
+          brew tap ${{ github.repository }}
+          cd "$(brew --repo ${{ github.repository }})"
+          git fetch
+          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          cd -
+      - name: install
+        run: |
+          brew install quantum-espresso
