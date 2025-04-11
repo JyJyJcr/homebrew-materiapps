@@ -20,6 +20,7 @@ jobs:
       #   with:
       #     ref: dummy_main
       #     fetch-depth: 0
+      #     path:
       - name: push
         run: |
           git clone -b dummy_main https://github.com/JyJyJcr/homebrew-materiapps.git
@@ -31,7 +32,7 @@ jobs:
           git add date.txt
           git commit -m "test: auto push"
           echo commit succ
-          git -c http.extraheader="AUTHORIZATION: bearer ${{ github.token }}" push
+          git -c http.extraheader="AUTHORIZATION: token ${{ github.token }}" push
   build:
     name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
