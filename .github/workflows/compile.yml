@@ -9,34 +9,37 @@ on:
       - prerelease-*
 
 jobs:
-  push_test:
-    name: test push
-    runs-on: macos-latest
-    permissions:
-      contents: write
-    steps:
-      # - name: checkout
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: dummy_main
-      #     fetch-depth: 0
-      #     path:
-      - name: push
-        run: |
-          git clone -b dummy_main https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
-          cd homebrew-materiapps
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git config list --local
-          date > date.txt
-          git add date.txt
-          git commit -m "test: auto push"
-          git push
-          cd -
-      # - name: push changes
-      #   uses: ad-m/github-push-action@v0.8.0
-      #   with:
-      #     branch: dummy_main
+  # push_test:
+  #   name: test push
+  #   runs-on: macos-latest
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #     # - name: checkout
+  #     #   uses: actions/checkout@v4
+  #     #   with:
+  #     #     ref: dummy_main
+  #     #     fetch-depth: 0
+  #     #     path:
+  #     - name: set
+  #       run: |
+  #         git config --global user.name github-actions[bot]
+  #         git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+  #     - name: push
+  #       run: |
+  #         git clone -b dummy_main
+  #         cd homebrew-materiapps
+          
+  #         git config list --local
+  #         date > date.txt
+  #         git add date.txt
+  #         git commit -m "test: auto push"
+  #         git push
+  #         cd -
+  #     # - name: push changes
+  #     #   uses: ad-m/github-push-action@v0.8.0
+  #     #   with:
+  #     #     branch: dummy_main
   build:
     name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
@@ -85,6 +88,10 @@ jobs:
       actions: write
     if: startsWith(github.ref,'refs/tags/release-')|| startsWith(github.ref,'refs/tags/prerelease-')
     steps:
+      - name: set gitconfig
+        run: |
+          git config --global user.name github-actions[bot]
+          git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
       - name: checkout
         run: |
           brew tap JyJyJcr/materiapps
@@ -95,8 +102,6 @@ jobs:
       - name: merge
         run: |
           cd "$(brew --repo JyJyJcr/materiapps)"
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
           cd -
       - name: download json
@@ -113,10 +118,7 @@ jobs:
       - name: push
         run: |
           cd "$(brew --repo JyJyJcr/materiapps)"
-          git config list
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git push
+          git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
           cd -
   publish_bottle:
     name: publish bottle
