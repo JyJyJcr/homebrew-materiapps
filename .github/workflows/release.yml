@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - name: reset & merge & push
         run: |
-          git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }} --
           git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
           git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
 
@@ -173,6 +173,6 @@ jobs:
           fetch-depth: 0
       - name: reset & push
         run: |
-          git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }} --
           git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
 
