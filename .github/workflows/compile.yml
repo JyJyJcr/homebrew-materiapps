@@ -26,12 +26,12 @@ jobs:
           cd homebrew-materiapps
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git config set http.https://github.com.extraheader "x-access-token: ${{ secrets.GITHUB_TOKEN }}"
           git config list --local
           date > date.txt
           git add date.txt
           git commit -m "test: auto push"
-          git push
+          echo commit succ
+          git -c http.extraheader="AUTHORIZATION: bearer ${{ github.token }}" push
   build:
     name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
