@@ -25,7 +25,7 @@ jobs:
         run: |
           git reset --hard ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }} --
           git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
-          git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
+          git push -f https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
 
   build:
     name: build bottle on ${{ matrix.target.name }}
