@@ -12,6 +12,8 @@ jobs:
   push_test:
     name: test push
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - name: checkout
         uses: actions/checkout@v4
