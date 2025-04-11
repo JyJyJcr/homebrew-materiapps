@@ -1,6 +1,3 @@
-# Documentation: https://docs.brew.sh/Formula-Cookbook
-#                https://rubydoc.brew.sh/Formula
-# PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 class QuantumEspresso < Formula
     desc "Quamtum opEn-Source Package for Research in Electronic Structure, Simulation, and Optimization"
     homepage "https://www.quantum-espresso.org"
@@ -17,12 +14,6 @@ class QuantumEspresso < Formula
     depends_on "open-mpi"
     depends_on "openblas"
     depends_on "scalapack"
-  
-    # Additional dependency
-    # resource "" do
-    #   url ""
-    #   sha256 ""
-    # end
   
     def install
         system "cmake", "-GNinja", "-S", ".", "-B", "build",
