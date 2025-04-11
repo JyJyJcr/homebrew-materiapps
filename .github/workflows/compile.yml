@@ -23,7 +23,7 @@ jobs:
       #     path:
       - name: push
         run: |
-          git clone -b dummy_main https://oauth2:${{ github.token }}@${{ github.server_url }}/${{ github.repository }}.git
+          git clone -b dummy_main https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
           cd homebrew-materiapps
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
