@@ -15,15 +15,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      # - name: checkout
-      #   uses: actions/checkout@v4
-      #   with:
-      #     ref: dummy_main
-      #     fetch-depth: 0
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: dummy_main
+          fetch-depth: 0
       - name: push
         run: |
-          git clone -b dummy_main https://github.com/JyJyJcr/homebrew-materiapps.git
-          cd homebrew-materiapps
+          # git clone -b dummy_main https://github.com/JyJyJcr/homebrew-materiapps.git
+          # cd homebrew-materiapps
           git config list --system
           git config list --global
           git config list --local
