@@ -21,9 +21,9 @@ jobs:
       #     ref: dummy_main
       #     fetch-depth: 0
       #     path:
-      - name: change
+      - name: push
         run: |
-          git clone -b dummy_main https://github.com/JyJyJcr/homebrew-materiapps.git
+          git clone -b dummy_main https://oauth2:${{ github.token }}@${{ github.server_url }}/${{ github.repository }}.git
           cd homebrew-materiapps
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -31,11 +31,12 @@ jobs:
           date > date.txt
           git add date.txt
           git commit -m "test: auto push"
-          echo commit succ
-      - name: push changes
-        uses: ad-m/github-push-action@v0.8.0
-        with:
-          branch: dummy_main
+          git push
+          cd -
+      # - name: push changes
+      #   uses: ad-m/github-push-action@v0.8.0
+      #   with:
+      #     branch: dummy_main
   build:
     name: build bottle on ${{matrix.target.name}}
     runs-on: ${{ matrix.target.host }}
