@@ -8,10 +8,10 @@ class QuantumEspresso < Formula
     head "https://github.com/JyJyJcr/q-e.git", branch: "develop-brew"
 
   bottle do
-    root_url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/prerelease-trial7"
+    root_url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/prerelease-trial8"
     rebuild 1
-    sha256 cellar: :any, arm64_sonoma: "790f01b13cb89de8255dea9cb2157ee8925d3148fac93515d0f7e0988c682191"
-    sha256 cellar: :any, ventura:      "89ae51deeb47c6cfdd160bdf1a2d7abd656cac2b5d16757d74e60bc2d01e79db"
+    sha256 cellar: :any, arm64_sonoma: "e54197ff6131932ba0837ebf0711fd14b1eaf559bb9d9441e29d70858ae26225"
+    sha256 cellar: :any, ventura:      "c85d170ba003e167ce684b233a5747241a060d63e315042e615537a05ef6bede"
   end
   
     depends_on "cmake" => :build
