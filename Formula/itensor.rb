@@ -4,7 +4,7 @@ class ITensor < Formula
     license "Apache 2.0"
     version "3.15"
     url "https://github.com/JyJyJcr/ITensor/archive/refs/tags/3.15-brew.tar.gz"
-    head "https://github.com/JyJyJcr/ITensor.git", branch: "cmake"
+    head "https://github.com/JyJyJcr/ITensor.git", branch: "version"
   
     depends_on "cmake" => :build
     depends_on "ninja" => :build
