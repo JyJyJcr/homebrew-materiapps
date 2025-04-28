@@ -14,12 +14,15 @@ jobs:
     outputs:
       formula: ${{ steps.list_formula.outputs.formula }}
     steps:
-      - name: brew install deps
-        run: |
-          brew upgrade
-          brew install jq
+      # jq is already installed
+      # - name: brew install deps
+      #   run: |
+      #     brew upgrade
+      #     brew install jq
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: list changed formula
         id: list_formula
         run: |
@@ -30,6 +33,7 @@ jobs:
   build:
     name: test ${{ matrix.formula }} for ${{ matrix.target.name }}
     runs-on: ${{ matrix.target.host }}
+    if: ${{ needs.seek.outputs.formula != '[]'}}
     needs: seek
     strategy:
       matrix:
