@@ -8,12 +8,12 @@ class Itensor < Formula
   
     depends_on "cmake" => :build
     depends_on "ninja" => :build
-    depends_on "libomp"
-    depends_on "openblas"
+    #depends_on "libomp"
+    #depends_on "openblas"
   
     def install
         system "cmake", "-GNinja", "-S", ".", "-B", "build",
-            "-DCMAKE_PREFIX_PATH=#{Formula["openblas"].opt_prefix}",
+#            "-DCMAKE_PREFIX_PATH=#{Formula["openblas"].opt_prefix}",
             *std_cmake_args
         system "cmake", "--build", "build"
         system "cmake", "--install", "build"
