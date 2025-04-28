@@ -1,4 +1,4 @@
-class ITensor < Formula
+class Itensor < Formula
     desc "A C++ library for efficient tensor network calculations"
     homepage "http://itensor.org/"
     license "Apache 2.0"
