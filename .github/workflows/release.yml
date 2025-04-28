@@ -2,36 +2,33 @@ name: release
 on:
   push:
     tags:
-      - release-*
-      - prerelease-*
+      - release/*/*
+      - prerelease/*/*
 
 jobs:
-  # seek:
-  #   name: seek changed formula
-  #   runs-on: macos-latest
-  #   outputs:
-  #     formula: ${{ steps.list_formula.outputs.formula }}
-  #   steps:
-  #     # jq is already installed
-  #     # - name: brew install deps
-  #     #   run: |
-  #     #     brew upgrade
-  #     #     brew install jq
-  #     - name: checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - name: list changed formula
-  #       id: list_formula
-  #       run: |
-  #         list_json="$(git diff --name-only ${{ github.event.before }} Formula/ | sed -e 's/^Formula\///g' -e 's/\.rb$//g' | jq -Rnc '[inputs|select(length>0)]')"
-  #         echo "$list_json"
-  #         echo "formula=$list_json" >> $GITHUB_OUTPUT
-
+  configure:
+    name: configure
+    runs-on: macos-latest
+    outputs:
+      formula: ${{ steps.get_formula.outputs.formula }}
+      is_release: ${{ startsWith(github.ref,'refs/tags/release/') }}
+      deploy_branch: ${{ startsWith(github.ref,'refs/tags/release/') && 'main' || 'dummy_main' }}
+      work_branch: ${{ startsWith(github.ref,'refs/tags/release/') && 'main_tmp' || 'dummy_main_tmp' }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: get formula from tag
+        id: get_formula
+        run: |
+          formula="$(echo ${{ github.ref_name }} | awk -F'[\\\\/]' ' { print $2 }')"
+          [ -f "Formula/$formula.rb" ]
+          echo "formula=$formula" >> $GITHUB_OUTPUT
 
   merge:
-    name: merge ${{ github.ref_name }} to ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+    name: merge ${{ github.ref_name }} to ${{ needs.configure.outputs.work_branch }}
     runs-on: macos-latest
+    needs:
+      - configure
     permissions:
       contents: write
     steps:
@@ -42,17 +39,19 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          ref: ${{ needs.configure.outputs.work_branch }}
           fetch-depth: 0
       - name: reset & merge & push
         run: |
-          git reset --hard origin/${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }} --
+          git reset --hard origin/${{ needs.configure.outputs.deploy_branch }} --
           git merge ${{github.sha}} -m "ci: catch up to ${{github.ref_name}}"
           git push -f https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
 
   build:
-    name: build bottle on ${{ matrix.target.name }}
-    needs: merge
+    name: build bottle of ${{ needs.configure.outputs.formula }} on ${{ matrix.target.name }}
+    needs:
+      - configure
+      - merge
     runs-on: ${{ matrix.target.host }}
     strategy:
       matrix:
@@ -65,32 +64,33 @@ jobs:
       - name: brew upgrade
         run: |
           brew upgrade
-      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+      - name: brew tap from ${{ needs.configure.outputs.work_branch }}
         run: |
           brew tap ${{ github.repository }}
           cd "$(brew --repo ${{ github.repository }})"
           git fetch
-          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          git switch ${{ needs.configure.outputs.work_branch }}
           cd -
       - name: build bottle
         run: |
-          brew install --build-bottle ${{ github.repository }}/quantum-espresso
-          brew bottle --json --root-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}" ${{ github.repository }}/quantum-espresso
+          brew install --build-bottle ${{ github.repository }}/${{ needs.configure.outputs.formula }}
+          brew bottle --json --root-url "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}" ${{ github.repository }}/${{ needs.configure.outputs.formula }}
       - name: upload bottle
         uses: actions/upload-artifact@v4
         with:
           name: bottle+${{ matrix.target.name }}
           path: |
-            quantum-espresso-*.tar.gz
+            ${{ needs.configure.outputs.formula }}-*.tar.gz
       - name: upload bottle info json
         uses: actions/upload-artifact@v4
         with:
           name: json+${{ matrix.target.name }}
           path: |
-            quantum-espresso-*.json
+            ${{ needs.configure.outputs.formula }}-*.json
   publish_formula:
     name: publish formula
     needs:
+      - configure
       - merge
       - build
     runs-on: macos-latest
@@ -104,12 +104,12 @@ jobs:
         run: |
           git config --global user.name github-actions[bot]
           git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
-      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+      - name: brew tap from ${{ needs.configure.outputs.work_branch }}
         run: |
           brew tap ${{ github.repository }}
           cd "$(brew --repo ${{ github.repository }})"
           git fetch
-          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          git switch ${{ needs.configure.outputs.work_branch }}
           cd -
       - name: download bottle info json
         uses: actions/download-artifact@v4
@@ -119,7 +119,7 @@ jobs:
           path: ./
       - name: commit
         run: |
-          brew bottle --merge --write quantum-espresso-*.json
+          brew bottle --merge --write ${{ needs.configure.outputs.formula }}-*.json
       - name: push
         run: |
           cd "$(brew --repo ${{ github.repository }})"
@@ -127,7 +127,9 @@ jobs:
           cd -
   publish_bottle:
     name: publish bottle
-    needs: build
+    needs:
+      - configure
+      - build
     runs-on: macos-latest
     permissions:
       contents: write
@@ -144,17 +146,18 @@ jobs:
       - name: replace bottle name
         run: |
           brew install rename
-          rename -s -- - quantum-espresso-*.tar.gz
+          rename -s -- - ${{ needs.configure.outputs.formula }}-*.tar.gz
       - name: create release
         uses: softprops/action-gh-release@v2
         with:
-          prerelease: ${{ startsWith(github.ref,'refs/tags/prerelease-') }}
+          prerelease: ${{ ! needs.configure.outputs.is_release }}
           files: |
-            quantum-espresso-*.tar.gz
+            ${{ needs.configure.outputs.formula }}-*.tar.gz
   test:
     name: test bottle on ${{ matrix.target.name }}
     runs-on: ${{ matrix.target.host }}
     needs:
+      - configure
       - publish_bottle
       - publish_formula
     strategy:
@@ -168,19 +171,21 @@ jobs:
       - name: brew upgrade
         run: |
           brew upgrade
-      - name: brew tap from ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+      - name: brew tap from ${{ needs.configure.outputs.work_branch }}
         run: |
           brew tap ${{ github.repository }}
           cd "$(brew --repo ${{ github.repository }})"
           git fetch
-          git switch ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
+          git switch ${{ needs.configure.outputs.work_branch }}
           cd -
       - name: brew install from bottle
         run: |
-          brew install quantum-espresso
+          brew install ${{ github.repository }}/${{ needs.configure.outputs.formula }}
   commit:
-    name: commit ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }} to ${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }}
-    needs: test
+    name: sync ${{ needs.configure.outputs.deploy_branch }} to ${{ needs.configure.outputs.work_branch }}
+    needs:
+      - configure
+      - test
     runs-on: macos-latest
     permissions:
       contents: write
@@ -192,10 +197,10 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ startsWith(github.ref,'refs/tags/release-') && 'main' || 'dummy_main' }}
+          ref: ${{ needs.configure.outputs.deploy_branch }}
           fetch-depth: 0
       - name: reset & push
         run: |
-          git reset --hard origin/${{ startsWith(github.ref,'refs/tags/release-') && 'main_tmp' || 'dummy_main_tmp' }} --
+          git reset --hard origin/${{ needs.configure.outputs.work_branch }} --
           git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
 
