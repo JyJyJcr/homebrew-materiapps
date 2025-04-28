@@ -3,12 +3,34 @@ on:
   push:
     branches-ignore:
       - main
+      - main_tmp
       - dummy_main
+      - dummy_main_tmp
 
 jobs:
+  seek:
+    name: seek changed formula
+    runs-on: macos-latest
+    outputs:
+      formula: ${{ steps.list_formula.outputs.formula }}
+    steps:
+      - name: brew install deps
+        run: |
+          brew upgrade
+          brew install jq
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: list changed formula
+        id: list_formula
+        run: |
+          list_json="$(git diff --name-only ${{ github.event.before }} Formula/ | sed -e 's/^Formula\///g' -e 's/\.rb$//g' | jq -Rnc '[inputs|select(length>0)]')"
+          echo "$list_json"
+          echo "formula=$list_json" >> $GITHUB_OUTPUT
+
   build:
-    name: test on ${{ matrix.target.name }}
+    name: test ${{ matrix.formula }} for ${{ matrix.target.name }}
     runs-on: ${{ matrix.target.host }}
+    needs: seek
     strategy:
       matrix:
         target:
@@ -16,6 +38,7 @@ jobs:
             host: macos-14
           - name: osx_amd64
             host: macos-13
+        formula: ${{ fromJson(needs.seek.outputs.formula) }}
     steps:
       - name: brew upgrade
         run: |
