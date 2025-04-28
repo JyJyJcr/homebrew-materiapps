@@ -7,6 +7,12 @@ class Itensor < Formula
         tag: "3.2.0-brew",
         revision: "82b0e54dcb8d2c0190adfb7cab292ecce40f003f"
     head "https://github.com/JyJyJcr/ITensor.git", branch: "version"
+
+  bottle do
+    root_url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/release/itensor/3.2.0"
+    sha256 cellar: :any, arm64_sonoma: "27096575f6f265cf18b474b791a287900c7fdc48a6496222ab88d8d9865fdf3f"
+    sha256 cellar: :any, ventura:      "27e416b6a5654b155ca824da9660e8e3384fa499d6f1ffd5bf5e0577f7f9e648"
+  end
   
     depends_on "cmake" => :build
     depends_on "ninja" => :build
