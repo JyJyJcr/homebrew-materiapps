@@ -56,7 +56,7 @@ jobs:
           cd -
       - name: brew install from source
         run: |
-          brew install ${{ github.repository }}/${{ matrix.formula }}
+          brew install -v ${{ github.repository }}/${{ matrix.formula }}
       # - name: brew test
       #   run: |
       #     brew test ${{ github.repository }}/${{ matrix.formula }}
