@@ -3,7 +3,7 @@ class ITensor < Formula
     homepage "http://itensor.org/"
     license "Apache 2.0"
     version "3.15"
-    url "https://github.com/JyJyJcr/ITensor/archive/refs/tags/3.15-brew.tar.gz",
+    url "https://github.com/JyJyJcr/ITensor/archive/refs/tags/3.15-brew.tar.gz"
     head "https://github.com/JyJyJcr/ITensor.git", branch: "cmake"
   
     depends_on "cmake" => :build
