@@ -2,9 +2,9 @@ class Itensor < Formula
     desc "A C++ library for efficient tensor network calculations"
     homepage "http://itensor.org/"
     license "Apache 2.0"
-    version "3.15"
+    version "3.2.0"
     url "https://github.com/JyJyJcr/ITensor.git",
-        tag: "3.15-brew",
+        tag: "3.2.0-brew",
         revision: "82b0e54dcb8d2c0190adfb7cab292ecce40f003f"
     head "https://github.com/JyJyJcr/ITensor.git", branch: "version"
 
@@ -29,7 +29,7 @@ class Itensor < Formula
         depends_on "openblas"
         depends_on "gcc" # for libgomp, since openblas is built with this
         fails_with :clang do
-            cause "openblas use libgomp (in gcc), which is not compatible with clang"
+            cause "itensor depends on openblas and openblas use libgomp (in gcc), which is not compatible with clang"
         end
     end
   

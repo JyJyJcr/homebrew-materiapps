@@ -25,6 +25,8 @@ class QuantumEspresso < Formula
   
     def install
         system "cmake", "-GNinja", "-S", ".", "-B", "build",
+
+            "-DBUILD_SHARED_LIB=ON",
             "-DQE_ENABLE_OPENMP=ON",
             "-DQE_ENABLE_SCALAPACK=ON",
             "-DQE_ENABLE_MPI=ON",
