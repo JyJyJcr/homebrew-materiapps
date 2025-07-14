@@ -20,7 +20,7 @@ class Hphi < Formula
             "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             "-DBUILD_SHARED_LIB=ON",
             "-DUSE_SCALAPACK=ON",
-            #"-DSCALAPACK_LIBRARIES=-lscalapack",
+            "-DSCALAPACK_LIBRARIES=-lscalapack",
             "-DCMAKE_PREFIX_PATH=#{Formula["openblas"].opt_prefix}",
             *std_cmake_args
         system "cmake", "--build", "build"
