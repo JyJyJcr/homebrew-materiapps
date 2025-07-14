@@ -1,4 +1,4 @@
-class HPhi < Formula
+class Hphi < Formula
     desc "Quantum Lattice Model Simulator Package"
     homepage "https://www.pasums.issp.u-tokyo.ac.jp/hphi/en/"
     license "GPL-3.0"
