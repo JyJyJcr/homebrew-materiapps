@@ -17,7 +17,7 @@ class Hphi < Formula
   
     def install
         system "cmake", "-GNinja", "-S", ".", "-B", "build",
-
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             "-DBUILD_SHARED_LIB=ON",
             "-DUSE_SCALAPACK=ON",
             #"-DSCALAPACK_LIBRARIES=-lscalapack",
