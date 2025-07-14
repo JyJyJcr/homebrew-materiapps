@@ -7,6 +7,12 @@ class Hphi < Formula
         tag: "v3.5.2",
         revision: "df0277d9a2c8f8a16dcc266db2e31ccd75214aa1"
     head "https://github.com/issp-center-dev/HPhi.git", branch: "develop"
+
+  bottle do
+    root_url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/release/hphi/3.5.2"
+    sha256 cellar: :any, arm64_sonoma: "ba6b4e8d858887c4d70cc470a8c1a2c84713e04c208ea6464cbd6b9e4545a97e"
+    sha256 cellar: :any, ventura:      "ca7388b1cbbbcdd5d89fd149030f5b67c455c42eb572187a68a6efba10053612"
+  end
   
     depends_on "cmake" => :build
     depends_on "ninja" => :build
