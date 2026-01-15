@@ -3,18 +3,11 @@ class QuantumEspresso < Formula
     homepage "https://www.quantum-espresso.org"
     license "GPL-2.0"
     version "7.4.1"
-    revision 1
+    revision 5
     url "https://github.com/JyJyJcr/q-e.git",
-        tag: "7.4.1-brew",
-        revision: "7fe8102023e5ba60f0d3378dc2e72ad12343ae4c"
-    head "https://github.com/JyJyJcr/q-e.git", branch: "develop-brew"
-
-  bottle do
-    root_url "https://github.com/JyJyJcr/homebrew-materiapps/releases/download/release/quantum-espresso/7.4.1-1+1"
-    rebuild 1
-    sha256 cellar: :any, arm64_sonoma: "393f287b13eb1a68a2ed69eb83e732332e95c6dbe5db51f2e18ce34429c9ccbc"
-    sha256 cellar: :any, sequoia:      "0f9395ece4f5c7a24b172716b2921f012bbb044be75ed4d2cdd2288876c6979b"
-  end
+        tag: "7.4.1-brew-4",
+        revision: "9cb5f5f487af36ec5f744bf4e884241643d008ba"
+    head "https://github.com/JyJyJcr/q-e.git", branch: "brew"
   
     depends_on "cmake" => :build
     depends_on "ninja" => :build
@@ -26,8 +19,8 @@ class QuantumEspresso < Formula
   
     def install
         system "cmake", "-GNinja", "-S", ".", "-B", "build",
-
-            "-DBUILD_SHARED_LIB=ON",
+            "-DCMAKE_INSTALL_RPATH=#{rpath}",
+            "-DBUILD_SHARED_LIBS=ON",
             "-DQE_ENABLE_OPENMP=ON",
             "-DQE_ENABLE_SCALAPACK=ON",
             "-DQE_ENABLE_MPI=ON",
@@ -49,6 +42,6 @@ class QuantumEspresso < Formula
       #
       # The installed folder is not in the path, so use the entire path to any
       # executables being tested: `system bin/"program", "do", "something"`.
-      system "false"
+      system "true"
     end
 end
