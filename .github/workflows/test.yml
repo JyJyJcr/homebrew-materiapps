@@ -41,7 +41,7 @@ jobs:
           - name: osx_arm64
             host: macos-14
           - name: osx_amd64
-            host: macos-13
+            host: macos-15-intel
         formula: ${{ fromJson(needs.seek.outputs.formula) }}
     steps:
       - name: brew upgrade
