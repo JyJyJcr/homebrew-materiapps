@@ -5,8 +5,8 @@ class QuantumEspresso < Formula
     version "7.4.1"
     revision 3
     url "https://github.com/JyJyJcr/q-e.git",
-        tag: "7.4.1-brew-3",
-        revision: "caadf5be9991d1001f127c4fe0c8256e0f7a689c"
+        tag: "7.4.1-brew-4",
+        revision: "9cb5f5f487af36ec5f744bf4e884241643d008ba"
     head "https://github.com/JyJyJcr/q-e.git", branch: "brew"
   
     depends_on "cmake" => :build
