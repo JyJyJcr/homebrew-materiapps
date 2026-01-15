@@ -59,7 +59,7 @@ jobs:
           - name: osx_arm64
             host: macos-14
           - name: osx_amd64
-            host: macos-13
+            host: macos-15-intel
     steps:
       - name: brew upgrade
         run: |
@@ -166,7 +166,7 @@ jobs:
           - name: osx_arm64
             host: macos-14
           - name: osx_amd64
-            host: macos-13
+            host: macos-15-intel
     steps:
       - name: brew upgrade
         run: |
@@ -203,4 +203,3 @@ jobs:
         run: |
           git reset --hard origin/${{ needs.configure.outputs.work_branch }} --
           git push https://oauth2:${{ github.token }}@github.com/${{ github.repository }}.git
-
