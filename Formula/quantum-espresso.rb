@@ -3,10 +3,10 @@ class QuantumEspresso < Formula
     homepage "https://www.quantum-espresso.org"
     license "GPL-2.0"
     version "7.4.1"
-    revision 2
+    revision 3
     url "https://github.com/JyJyJcr/q-e.git",
-        tag: "7.4.1-brew",
-        revision: "7fe8102023e5ba60f0d3378dc2e72ad12343ae4c"
+        tag: "7.4.1-brew-3",
+        revision: "caadf5be9991d1001f127c4fe0c8256e0f7a689c"
     head "https://github.com/JyJyJcr/q-e.git", branch: "develop-brew"
   
     depends_on "cmake" => :build
@@ -42,6 +42,6 @@ class QuantumEspresso < Formula
       #
       # The installed folder is not in the path, so use the entire path to any
       # executables being tested: `system bin/"program", "do", "something"`.
-      system "false"
+      system "true"
     end
 end
